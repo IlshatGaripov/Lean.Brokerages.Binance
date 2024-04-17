@@ -16,12 +16,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Hosting;
 using QuantConnect.ToolBox;
 using QuantConnect.Configuration;
 using QuantConnect.Data;
 using QuantConnect.Data.Market;
 using QuantConnect.Util;
 using static QuantConnect.Configuration.ApplicationParser;
+using QuantConnect.Logging;
+using Quartz;
+using Microsoft.Extensions.DependencyInjection;
+using QuantConnect.BinanceBrokerage.ToolBox;
 
 namespace QuantConnect.Brokerages.Binance.ToolBox
 {
@@ -29,10 +34,17 @@ namespace QuantConnect.Brokerages.Binance.ToolBox
     {
         static void Main(string[] args)
         {
+            Log.DebuggingEnabled = Config.GetBool("debug-mode", true);
+
             var optionsObject = ToolboxArgumentParser.ParseArguments(args);
             if (optionsObject.Count == 0)
             {
                 PrintMessageAndExit();
+            }
+
+            if (optionsObject.ContainsKey("destination-dir"))
+            {
+                Config.Set("data-folder", optionsObject["destination-dir"]);
             }
 
             if (!optionsObject.TryGetValue("app", out var targetApp))
@@ -59,13 +71,11 @@ namespace QuantConnect.Brokerages.Binance.ToolBox
                 {
                     dataDownloader = new BinanceDataDownloader();
                 }
-                DownloadData(
-                    dataDownloader,
-                    tickers,
-                    resolution,
-                    fromDate,
-                    toDate);
-                dataDownloader.DisposeSafely();
+
+                DownloadData(dataDownloader, tickers, resolution, fromDate, toDate);
+
+                //RunQuartzDownloaderJob(dataDownloader, tickers, resolution, fromDate, toDate);
+
             }
             else if (targetAppName.Contains("updater") || targetAppName.EndsWith("spu"))
             {
@@ -85,6 +95,46 @@ namespace QuantConnect.Brokerages.Binance.ToolBox
             {
                 PrintMessageAndExit(1, "ERROR: Unrecognized --app value");
             }
+        }
+
+        public static void RunQuartzDownloaderJob(BaseDataDownloader downloader, List<string> tickers, string resolution, DateTime fromDate, DateTime toDate)
+        {
+            var builder = Host.CreateDefaultBuilder()
+                .ConfigureServices((cxt, services) =>
+                {
+                    services.AddQuartz();
+                    services.AddQuartzHostedService(opt =>
+                    {
+                        opt.WaitForJobsToComplete = true;
+                    });
+                    services.AddSingleton(new QuartzDownloaderJobData()
+                    {
+                        Downloader = downloader,
+                        Resolution = resolution,
+                        Tickers = tickers,
+                        FromDate = fromDate,
+                    });
+                }).Build();
+
+            var schedulerFactory = builder.Services.GetRequiredService<ISchedulerFactory>();
+            var scheduler = schedulerFactory.GetScheduler().GetAwaiter().GetResult();
+            scheduler.Start();
+
+            var job = JobBuilder.Create<QuartzDownloaderJob>()
+                .WithIdentity("myJob", "group1")
+                .Build();
+
+            var trigger = TriggerBuilder.Create()
+                .WithIdentity("myTrigger", "group1")
+                .StartNow()
+                .WithSimpleSchedule(x => x
+                    .WithIntervalInHours(12)
+                    .RepeatForever())
+                .Build();
+
+            scheduler.ScheduleJob(job, trigger);
+
+            builder.Run();
         }
 
         /// <summary>
