@@ -16,4 +16,4 @@ WORKDIR /app
 COPY --from=build-env /app/QuantConnect.BinanceBrokerage.ToolBox/out .
 ENV ENVIRONMENT=Docker
 
-ENTRYPOINT ["dotnet", "QuantConnect.BinanceBrokerage.ToolBox.dll"]
+ENTRYPOINT ["dotnet", "QuantConnect.Brokerages.Binance.ToolBox.dll"]

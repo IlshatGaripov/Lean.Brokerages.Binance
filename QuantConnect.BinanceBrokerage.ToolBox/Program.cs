@@ -72,9 +72,9 @@ namespace QuantConnect.Brokerages.Binance.ToolBox
                     dataDownloader = new BinanceDataDownloader();
                 }
 
-                DownloadData(dataDownloader, tickers, resolution, fromDate, toDate);
+                //DownloadData(dataDownloader, tickers, resolution, fromDate, toDate);
 
-                //RunQuartzDownloaderJob(dataDownloader, tickers, resolution, fromDate, toDate);
+                RunQuartzDownloaderJob(dataDownloader, tickers, resolution, fromDate, toDate);
 
             }
             else if (targetAppName.Contains("updater") || targetAppName.EndsWith("spu"))
