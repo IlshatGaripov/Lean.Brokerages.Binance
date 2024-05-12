@@ -38,6 +38,8 @@ namespace QuantConnect.BinanceBrokerage.ToolBox
             DownloadData(_data.Downloader, _data.Tickers, _data.Resolution, fromDateTime, toDateTime);
             _data.FromDate = toDateTime.Date;
 
+            _logger.LogInformation($"Completed QuartzDownloaderJob run..");
+
             return Task.CompletedTask;
         }
         

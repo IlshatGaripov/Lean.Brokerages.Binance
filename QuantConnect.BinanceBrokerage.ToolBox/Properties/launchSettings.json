@@ -2,8 +2,8 @@
   "profiles": {
     "QuantConnect.BinanceBrokerage.ToolBox": {
       "commandName": "Project",
-      "commandLineArgs": "--app=binancedownloader --from-date=20231015-00:00:00 --resolution=Minute --tickers=BNBUSDT --destination-dir=C:\\Users\\igari\\source\\repos\\Lean\\Data"
-      //"commandLineArgs": "--app=binancesymbolpropertiesupdater --destination-dir=D:/Data"
+      //"commandLineArgs": "--app=binancedownloader --from-date=20231015-00:00:00 --resolution=Minute --tickers=BNBUSDT --destination-dir=C:\\Users\\igari\\source\\repos\\Lean\\Data"
+      "commandLineArgs": "--app=binancesymbolpropertiesupdater --destination-dir=C:\\Users\\igari\\source\\repos\\Lean\\Data"
     }
   }
 }

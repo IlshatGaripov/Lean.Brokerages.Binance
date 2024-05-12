@@ -55,7 +55,11 @@ namespace QuantConnect.Brokerages.Binance.ToolBox
         {
             var data = Extensions.DownloadData($"{_restApiHost}/api/v3/exchangeInfo");
 
-            foreach (var symbol in JsonConvert.DeserializeObject<ExchangeInfo>(data).Symbols)
+            var symbols = JsonConvert.DeserializeObject<ExchangeInfo>(data).Symbols;
+            Console.WriteLine(string.Join(",",
+                symbols.Where(x => x.QuoteAsset == "USDT" && !x.Name.EndsWith("UPUSDT") && !x.Name.EndsWith("DOWNUSDT"))
+                    .Select(x => x.Name)));
+            foreach (var symbol in symbols)
             {
                 if (!symbol.IsSpotTradingAllowed && !symbol.IsMarginTradingAllowed)
                 {
